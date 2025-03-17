@@ -56,7 +56,7 @@ class LLMService:
             print(f"Error in chat conversation: {e}")
             return f"Error in chat conversation. Please try again later. Error details: {str(e)}"
     
-    def get_solution_feedback(self, challenge, code, language):
+    def get_solution_feedback(self, challenge, code, language="javascript"):
         """Generate feedback for a submitted solution"""
         if not GEMINI_API_KEY:
             return "API key not configured. Please add GEMINI_API_KEY to your .env file."
@@ -82,13 +82,13 @@ class LLMService:
             print(f"Error calling Gemini API: {e}")
             return f"Error generating hint. Please try again later. Error details: {str(e)}"
     
-    def generate_challenge(self, difficulty=None):
-        """Generate a coding challenge using LLM"""
+    def generate_challenge(self, difficulty=None, additional_context=None, language="javascript"):
+        """Generate a single coding challenge using LLM"""
         if not GEMINI_API_KEY:
             return None
         
         try:
-            prompt = self._create_challenge_prompt(difficulty)
+            prompt = self._create_challenge_prompt(difficulty, additional_context, language)
             response = self.model.generate_content(contents=prompt)
             
             # Parse the JSON response
@@ -126,8 +126,8 @@ class LLMService:
             print(f"Error calling Gemini API: {e}")
             return None
             
-    def generate_multiple_challenges(self, count=5, difficulties=None):
-        """Generate multiple coding challenges"""
+    def generate_multiple_challenges(self, count=5, difficulties=None, additional_context=None, language="javascript"):
+        """Generate multiple coding challenges using LLM"""
         challenges = []
         
         if difficulties is None:
@@ -140,7 +140,7 @@ class LLMService:
         
         # Generate challenges with assigned difficulties
         for difficulty in assigned_difficulties:
-            challenge = self.generate_challenge(difficulty)
+            challenge = self.generate_challenge(difficulty, additional_context, language)
             if challenge:
                 challenges.append(challenge)
         
@@ -198,9 +198,14 @@ class LLMService:
         The hint should be concise and point them in the right direction.
         """
     
-    def _create_challenge_prompt(self, difficulty=None):
+    def _create_challenge_prompt(self, difficulty=None, additional_context=None, language="javascript"):
         """Create a prompt for generating a coding challenge"""
         difficulty_str = f"The difficulty level should be {difficulty}." if difficulty else "Choose a random difficulty level (easy, medium, or hard)."
+        
+        # Add additional context if provided
+        context_str = ""
+        if additional_context:
+            context_str = f"The challenge should relate to the following context or topic: {additional_context}."
         
         # Add previous challenges to avoid repetition
         previous_challenges_str = ""
@@ -210,7 +215,7 @@ class LLMService:
                 previous_challenges_str += f"{i+1}. {challenge['title']}: {challenge['description_snippet']}...\n"
         
         return f"""
-        Generate a unique, interesting coding interview challenge. {difficulty_str}
+        Generate a unique, interesting coding interview challenge in {language}. {difficulty_str} {context_str}
         
         {previous_challenges_str}
         
@@ -236,6 +241,7 @@ class LLMService:
         4. Includes 2-3 helpful hints that don't give away the solution
         5. Is formatted as valid JSON
         6. Is novel and different from previous challenges listed above
+        7. Specifically addresses the provided context or topic if specified
         
         Return ONLY the JSON without any other text.
         """

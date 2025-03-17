@@ -85,10 +85,31 @@ header h1 {
 }
 
 /* Form Controls */
-select {
+select, input[type="text"] {
     padding: 8px;
     border-radius: var(--border-radius);
     border: 1px solid var(--secondary-color);
+}
+
+/* Context Input Styles */
+.context-input {
+    flex-grow: 1;
+}
+
+#context-input {
+    width: 100%;
+    min-width: 180px;
+    transition: border 0.3s;
+}
+
+#context-input:focus {
+    outline: none;
+    border: 1px solid var(--primary-color);
+}
+
+#context-input::placeholder {
+    color: #aaa;
+    font-style: italic;
 }
 
 /* Difficulty Selector Styles */
@@ -335,6 +356,11 @@ footer {
     
     .controls {
         width: 100%;
-        justify-content: space-between;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .context-input {
+        width: 100%;
     }
 }

@@ -29,6 +29,8 @@ def get_challenge():
     """Get a random challenge or specific challenge by ID"""
     challenge_id = request.args.get('id')
     difficulty = request.args.get('difficulty')
+    additional_context = request.args.get('context')
+    language = request.args.get('language', 'javascript')  # Add language parameter
     
     if challenge_id:
         # If a specific ID is requested, look it up in the challenge_history
@@ -39,7 +41,7 @@ def get_challenge():
             return jsonify({"error": "Challenge not found"}), 404
     else:
         # Generate a new random challenge using LLM
-        challenge = llm_service.generate_challenge(difficulty)
+        challenge = llm_service.generate_challenge(difficulty, additional_context, language)  # Pass language
         
         if not challenge:
             return jsonify({"error": "Failed to generate challenge. Please check API key configuration."}), 500
@@ -56,13 +58,15 @@ def get_challenges():
     """Get multiple challenges with optional difficulty filter"""
     count = request.args.get('count', default=5, type=int)
     difficulty = request.args.get('difficulty')
+    additional_context = request.args.get('context')
+    language = request.args.get('language', 'javascript')  # Add language parameter
     
     difficulties = None
     if difficulty:
         difficulties = [difficulty]
         
     # Generate challenges using LLM
-    challenges = llm_service.generate_multiple_challenges(count, difficulties)
+    challenges = llm_service.generate_multiple_challenges(count, difficulties, additional_context, language)  # Pass language
     
     if not challenges:
         return jsonify({"error": "Failed to generate challenges"}), 500

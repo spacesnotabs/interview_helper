@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const languageSelector = document.getElementById('language-selector');
     const difficultySelector = document.getElementById('difficulty-selector');
+    const contextInput = document.getElementById('context-input');
     const newChallengeBtn = document.getElementById('new-challenge-btn');
     const hintBtn = document.getElementById('hint-btn');
     const submitBtn = document.getElementById('submit-btn');
@@ -86,16 +87,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset the hint index for the new challenge
             currentHintIndex = 0;
             
-            // Get the selected difficulty
+            // Get the selected difficulty and additional context
             const selectedDifficulty = difficultySelector.value;
+            const additionalContext = contextInput.value.trim();
             
-            // Build the API URL with difficulty parameter if selected
+            // Build the API URL with parameters
             let apiUrl = `${API_BASE_URL}/challenge`;
+            const params = new URLSearchParams();
+            
             if (selectedDifficulty) {
-                apiUrl += `?difficulty=${selectedDifficulty}`;
+                params.append('difficulty', selectedDifficulty);
             }
             
-            // Call the backend API to get a challenge with the specified difficulty
+            if (additionalContext) {
+                params.append('context', additionalContext);
+            }
+            
+            // Add parameters to URL if any exist
+            if (params.toString()) {
+                apiUrl += `?${params.toString()}`;
+            }
+            
+            // Call the backend API to get a challenge with the specified parameters
             const response = await fetch(apiUrl);
             const data = await response.json();
             
