@@ -18,6 +18,7 @@ llm_service = LLMService()
 
 # In-memory cache for generated challenges
 challenge_cache = {}
+challenge_history = {}
 
 @app.route('/')
 def index():
@@ -30,8 +31,9 @@ def get_challenge():
     difficulty = request.args.get('difficulty')
     
     if challenge_id:
-        # Return specific challenge from cache if it exists
-        challenge = challenge_cache.get(challenge_id)
+        # If a specific ID is requested, look it up in the challenge_history
+        # This would be needed if you want to revisit a specific challenge
+        challenge = challenge_history.get(challenge_id)
         
         if not challenge:
             return jsonify({"error": "Challenge not found"}), 404
@@ -42,8 +44,8 @@ def get_challenge():
         if not challenge:
             return jsonify({"error": "Failed to generate challenge. Please check API key configuration."}), 500
         
-        # Store the challenge in the cache
-        challenge_cache[challenge["id"]] = challenge
+        # Store in history (not cache) for possible revisiting
+        challenge_history[challenge["id"]] = challenge
     
     # Don't include hints in the initial response
     response_challenge = {k: v for k, v in challenge.items() if k != 'hints'}
@@ -127,14 +129,10 @@ def submit_solution():
         return jsonify({"error": f"Error generating feedback: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # For demo purposes, we can pre-generate some challenges to populate the cache
-    try:
-        initial_challenges = llm_service.generate_multiple_challenges(3)
-        for challenge in initial_challenges:
-            challenge_cache[challenge["id"]] = challenge
-        print(f"Pre-generated {len(initial_challenges)} challenges")
-    except Exception as e:
-        print(f"Could not pre-generate challenges: {e}")
-        # The application will still work, challenges will be generated on demand
+    # Initialize challenge history dict instead of cache
+    challenge_history = {}
+    
+    # No need to pre-generate challenges anymore
+    # The app will generate fresh challenges on demand
     
     app.run(debug=True, port=5000)

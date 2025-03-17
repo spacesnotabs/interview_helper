@@ -17,6 +17,7 @@ class LLMService:
         self.model_name = model_name
         self._model = None
         self.chat = None
+        self.previous_challenges = []  # Track previous challenge titles/descriptions
         
         if not GEMINI_API_KEY:
             print("Warning: GEMINI_API_KEY not set in environment variables")
@@ -106,6 +107,16 @@ class LLMService:
                 if "id" not in challenge_data:
                     challenge_data["id"] = str(uuid.uuid4())
                 
+                # Add to previous challenges list for future reference
+                self.previous_challenges.append({
+                    "title": challenge_data["title"],
+                    "description_snippet": challenge_data["description"][:100]  # Store just a snippet
+                })
+                
+                # Keep the list at a reasonable size
+                if len(self.previous_challenges) > 20:
+                    self.previous_challenges = self.previous_challenges[-20:]
+                
                 return challenge_data
             except json.JSONDecodeError as e:
                 print(f"Error parsing challenge JSON: {e}")
@@ -191,8 +202,17 @@ class LLMService:
         """Create a prompt for generating a coding challenge"""
         difficulty_str = f"The difficulty level should be {difficulty}." if difficulty else "Choose a random difficulty level (easy, medium, or hard)."
         
+        # Add previous challenges to avoid repetition
+        previous_challenges_str = ""
+        if self.previous_challenges:
+            previous_challenges_str = "Avoid generating challenges similar to these:\n"
+            for i, challenge in enumerate(self.previous_challenges):
+                previous_challenges_str += f"{i+1}. {challenge['title']}: {challenge['description_snippet']}...\n"
+        
         return f"""
-        Generate a coding interview challenge. {difficulty_str}
+        Generate a unique, interesting coding interview challenge. {difficulty_str}
+        
+        {previous_challenges_str}
         
         The response should be a valid JSON object with the following structure:
         {{
@@ -215,6 +235,7 @@ class LLMService:
         3. Has appropriate difficulty level
         4. Includes 2-3 helpful hints that don't give away the solution
         5. Is formatted as valid JSON
+        6. Is novel and different from previous challenges listed above
         
         Return ONLY the JSON without any other text.
         """
