@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Helper - Coding Challenge Practice</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <!-- Code editor library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <!-- Language modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interview Helper</h1>
+            <div class="controls">
+                <select id="language-selector">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                </select>
+                <button id="new-challenge-btn" class="btn primary">New Challenge</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="challenge-section">
+                <div class="challenge-card">
+                    <h2 id="challenge-title">Challenge Title</h2>
+                    <div id="challenge-description" class="challenge-description">
+                        <p>Loading challenge...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="editor-section">
+                <h3>Your Solution</h3>
+                <div id="code-editor"></div>
+                <div class="action-buttons">
+                    <button id="hint-btn" class="btn secondary">Get Hint</button>
+                    <button id="submit-btn" class="btn primary">I'm Finished</button>
+                </div>
+            </section>
+
+            <section class="response-section">
+                <h3>LLM Response</h3>
+                <div id="results-display" class="response-display">
+                    <p>Submit your solution or request a hint to see feedback...</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Interview Helper &copy; 2023 - Your coding interview companion</p>
+        </footer>
+    </div>
+
+    <script src="static/js/app.js"></script>
+</body>
+</html>
