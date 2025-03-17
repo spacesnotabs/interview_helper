@@ -10,6 +10,11 @@
     --white: #ffffff;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     --border-radius: 5px;
+    --easy-color: #4caf50;
+    --medium-color: #ff9800;
+    --hard-color: #e91e63;
+    --code-bg: #f5f5f5;
+    --code-border: #e0e0e0;
 }
 
 * {
@@ -86,6 +91,29 @@ select {
     border: 1px solid var(--secondary-color);
 }
 
+/* Difficulty Selector Styles */
+#difficulty-selector {
+    border: 1px solid var(--secondary-color);
+    transition: all 0.3s ease;
+}
+
+#difficulty-selector.active {
+    border: 2px solid var(--primary-color);
+    font-weight: bold;
+}
+
+#difficulty-selector option[value="easy"] {
+    color: var(--easy-color);
+}
+
+#difficulty-selector option[value="medium"] {
+    color: var(--medium-color);
+}
+
+#difficulty-selector option[value="hard"] {
+    color: var(--hard-color);
+}
+
 /* Challenge Section */
 .challenge-card {
     background-color: var(--white);
@@ -98,6 +126,35 @@ select {
 .challenge-description {
     margin-top: 15px;
     line-height: 1.8;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+/* Difficulty Tag Styles */
+.difficulty {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.difficulty.easy {
+    background-color: var(--easy-color);
+}
+
+.difficulty.medium {
+    background-color: var(--medium-color);
+}
+
+.difficulty.hard {
+    background-color: var(--hard-color);
 }
 
 /* Editor Section */
@@ -150,6 +207,115 @@ select {
 .error {
     color: var(--danger);
     font-weight: bold;
+}
+
+/* Example and Constraint Lists */
+.example-list li {
+    margin-bottom: 1.5em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--code-border);
+}
+
+.example-list li:last-child {
+    border-bottom: none;
+}
+
+.constraint-list li {
+    margin-bottom: 0.5em;
+}
+
+.examples h4, .constraints h4 {
+    margin: 1.5em 0 0.75em;
+    color: var(--primary-color);
+}
+
+/* Markdown Styles for both Challenge and LLM Responses */
+.challenge-content h1, .challenge-content h2, .challenge-content h3,
+.challenge-content h4, .challenge-content h5, .challenge-content h6,
+.feedback h1, .feedback h2, .feedback h3,
+.feedback h4, .feedback h5, .feedback h6,
+.hint h1, .hint h2, .hint h3,
+.hint h4, .hint h5, .hint h6 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    color: var(--primary-color);
+}
+
+.challenge-content h1, .feedback h1, .hint h1 {
+    font-size: 1.8em;
+}
+
+.challenge-content h2, .feedback h2, .hint h2 {
+    font-size: 1.6em;
+}
+
+.challenge-content h3, .feedback h3, .hint h3 {
+    font-size: 1.4em;
+}
+
+.challenge-content p, .feedback p, .hint p {
+    margin-bottom: 1em;
+}
+
+.challenge-content ul, .challenge-content ol, 
+.feedback ul, .feedback ol, 
+.hint ul, .hint ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.challenge-content li, .feedback li, .hint li {
+    margin-bottom: 0.5em;
+}
+
+.challenge-content code, .feedback code, .hint code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: var(--code-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.challenge-content pre, .feedback pre, .hint pre {
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: var(--border-radius);
+    padding: 1em;
+    margin: 1em 0;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+.challenge-content pre code, .feedback pre code, .hint pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+
+.challenge-content table, .feedback table, .hint table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.challenge-content th, .challenge-content td,
+.feedback th, .feedback td, 
+.hint th, .hint td {
+    border: 1px solid var(--code-border);
+    padding: 0.5em;
+    text-align: left;
+}
+
+.challenge-content th, .feedback th, .hint th {
+    background-color: var(--code-bg);
+}
+
+.challenge-content blockquote, .feedback blockquote, .hint blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1em;
+    margin: 1em 0;
+    color: var(--secondary-color);
 }
 
 /* Footer */

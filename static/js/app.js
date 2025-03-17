@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const languageSelector = document.getElementById('language-selector');
+    const difficultySelector = document.getElementById('difficulty-selector');
     const newChallengeBtn = document.getElementById('new-challenge-btn');
     const hintBtn = document.getElementById('hint-btn');
     const submitBtn = document.getElementById('submit-btn');
@@ -28,8 +29,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Set default code
-    setDefaultCode('javascript');
+    // Configure marked.js
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false
+    });
 
     // Current challenge data
     let currentChallenge = null;
@@ -45,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event Listeners
     languageSelector.addEventListener('change', handleLanguageChange);
+    difficultySelector.addEventListener('change', updateDifficultyDisplay);
     newChallengeBtn.addEventListener('click', loadNewChallenge);
     hintBtn.addEventListener('click', requestHint);
     submitBtn.addEventListener('click', submitSolution);
@@ -58,43 +64,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update CodeMirror mode
         codeEditor.setOption('mode', languageModes[selectedLanguage]);
-        
-        // Set default code for the selected language
-        setDefaultCode(selectedLanguage);
-        
-        // If we have a current challenge, update the code template
-        if (currentChallenge) {
-            setCodeTemplate(currentChallenge, selectedLanguage);
-        }
     }
     
-    // Set default starter code based on language
-    function setDefaultCode(language) {
-        let defaultCode = '';
+    // Update the display based on the selected difficulty
+    function updateDifficultyDisplay() {
+        const selectedDifficulty = difficultySelector.value;
         
-        switch (language) {
-            case 'javascript':
-                defaultCode = '// Your JavaScript solution here\nfunction solution(input) {\n  // Write your code here\n  return null;\n}\n';
-                break;
-            case 'python':
-                defaultCode = '# Your Python solution here\ndef solution(input):\n  # Write your code here\n  pass\n';
-                break;
-            case 'java':
-                defaultCode = 'class Solution {\n  // Your Java solution here\n  public static Object solution(Object input) {\n    // Write your code here\n    return null;\n  }\n}\n';
-                break;
-            case 'cpp':
-                defaultCode = '// Your C++ solution here\n#include <iostream>\n#include <vector>\n\nusing namespace std;\n\n// Write your code here\nauto solution(auto input) {\n  // Implementation\n  return {};\n}\n';
-                break;
+        // Visual feedback that difficulty has been selected
+        if (selectedDifficulty) {
+            difficultySelector.classList.add('active');
+        } else {
+            difficultySelector.classList.remove('active');
         }
-        
-        codeEditor.setValue(defaultCode);
-    }
-    
-    // Set code template based on challenge and language
-    function setCodeTemplate(challenge, language) {
-        // This would normally use challenge-specific templates
-        // For now, we'll just use the default code
-        setDefaultCode(language);
     }
 
     // Load a new coding challenge from the backend
@@ -105,16 +86,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset the hint index for the new challenge
             currentHintIndex = 0;
             
-            // Call the backend API to get a random challenge
-            const response = await fetch(`${API_BASE_URL}/challenge`);
+            // Get the selected difficulty
+            const selectedDifficulty = difficultySelector.value;
+            
+            // Build the API URL with difficulty parameter if selected
+            let apiUrl = `${API_BASE_URL}/challenge`;
+            if (selectedDifficulty) {
+                apiUrl += `?difficulty=${selectedDifficulty}`;
+            }
+            
+            // Call the backend API to get a challenge with the specified difficulty
+            const response = await fetch(apiUrl);
             const data = await response.json();
             
             if (response.ok) {
                 currentChallenge = data;
                 displayChallenge(data);
-                
-                // Set code template based on current language
-                setCodeTemplate(data, languageSelector.value);
             } else {
                 throw new Error(data.error || 'Failed to load challenge');
             }
@@ -147,7 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                resultsDisplay.innerHTML = `<p class="hint"><strong>Hint:</strong> ${data.hint}</p>`;
+                // Format hint with markdown parser
+                const formattedHint = marked.parse(data.hint);
+                resultsDisplay.innerHTML = `<div class="hint"><strong>Hint:</strong> ${formattedHint}</div>`;
                 
                 // Increment the hint index if it's not the last hint
                 if (!data.isLastHint) {
@@ -188,8 +177,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                // Display the feedback from the LLM
-                resultsDisplay.innerHTML = `<div class="feedback">${data.feedback}</div>`;
+                // Format the feedback with markdown parser
+                const formattedFeedback = marked.parse(data.feedback);
+                resultsDisplay.innerHTML = `<div class="feedback">${formattedFeedback}</div>`;
             } else {
                 throw new Error(data.error || 'Failed to submit solution');
             }
@@ -203,19 +193,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayChallenge(challenge) {
         challengeTitle.textContent = challenge.title;
         
+        // Show difficulty if available
+        const difficultyText = challenge.difficulty ? 
+            `<span class="difficulty ${challenge.difficulty.toLowerCase()}">${challenge.difficulty}</span>` : '';
+        
+        // Format challenge description with markdown
+        const formattedDescription = marked.parse(challenge.description);
+        
         let examplesHTML = '';
         if (challenge.examples && challenge.examples.length > 0) {
+            const exampleItems = challenge.examples.map(ex => {
+                const inputFormatted = `<p><strong>Input:</strong> <code>${ex.input}</code></p>`;
+                const outputFormatted = `<p><strong>Output:</strong> <code>${ex.output}</code></p>`;
+                const explanationFormatted = ex.explanation ? 
+                    `<p><strong>Explanation:</strong> ${marked.parse(ex.explanation)}</p>` : '';
+                
+                return `<li>${inputFormatted}${outputFormatted}${explanationFormatted}</li>`;
+            }).join('');
+            
             examplesHTML = `
                 <div class="examples">
                     <h4>Examples:</h4>
-                    <ul>
-                        ${challenge.examples.map(ex => `
-                            <li>
-                                <p><strong>Input:</strong> ${ex.input}</p>
-                                <p><strong>Output:</strong> ${ex.output}</p>
-                                ${ex.explanation ? `<p><strong>Explanation:</strong> ${ex.explanation}</p>` : ''}
-                            </li>
-                        `).join('')}
+                    <ul class="example-list">
+                        ${exampleItems}
                     </ul>
                 </div>
             `;
@@ -223,20 +223,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let constraintsHTML = '';
         if (challenge.constraints && challenge.constraints.length > 0) {
+            const constraintItems = challenge.constraints.map(constraint => 
+                `<li>${marked.parse(constraint)}</li>`
+            ).join('');
+            
             constraintsHTML = `
                 <div class="constraints">
                     <h4>Constraints:</h4>
-                    <ul>
-                        ${challenge.constraints.map(constraint => `<li>${constraint}</li>`).join('')}
+                    <ul class="constraint-list">
+                        ${constraintItems}
                     </ul>
                 </div>
             `;
         }
 
         challengeDescription.innerHTML = `
-            <p>${challenge.description}</p>
-            ${examplesHTML}
-            ${constraintsHTML}
+            <div class="challenge-header">
+                ${difficultyText}
+            </div>
+            <div class="challenge-content">
+                ${formattedDescription}
+                ${examplesHTML}
+                ${constraintsHTML}
+            </div>
         `;
     }
     

@@ -15,8 +15,45 @@ if GEMINI_API_KEY:
 class LLMService:
     def __init__(self, model_name="gemini-2.0-flash"):
         self.model_name = model_name
+        self._model = None
+        self.chat = None
+        
         if not GEMINI_API_KEY:
             print("Warning: GEMINI_API_KEY not set in environment variables")
+    
+    @property
+    def model(self):
+        """Lazily initialize and return the model"""
+        if not self._model and GEMINI_API_KEY:
+            self._model = genai.GenerativeModel(model_name=self.model_name)
+        return self._model
+    
+    def start_new_chat(self, history=None):
+        """Start a new chat session with the model"""
+        if not GEMINI_API_KEY:
+            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
+        
+        try:
+            self.chat = self.model.start_chat(history=history)
+            return "New chat session started successfully."
+        except Exception as e:
+            print(f"Error starting chat session: {e}")
+            return f"Error starting chat session. Error details: {str(e)}"
+    
+    def chat_message(self, message):
+        """Send a message to the active chat session and get a response"""
+        if not GEMINI_API_KEY:
+            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
+        
+        if not self.chat:
+            self.start_new_chat()
+        
+        try:
+            response = self.chat.send_message(message)
+            return response.text
+        except Exception as e:
+            print(f"Error in chat conversation: {e}")
+            return f"Error in chat conversation. Please try again later. Error details: {str(e)}"
     
     def get_solution_feedback(self, challenge, code, language):
         """Generate feedback for a submitted solution"""
@@ -24,9 +61,8 @@ class LLMService:
             return "API key not configured. Please add GEMINI_API_KEY to your .env file."
         
         try:
-            model = genai.GenerativeModel(model_name=self.model_name)
             prompt = self._create_feedback_prompt(challenge, code, language)
-            response = model.generate_content(contents=prompt)
+            response = self.model.generate_content(contents=prompt)
             return response.text
         except Exception as e:
             print(f"Error calling Gemini API: {e}")
@@ -37,11 +73,9 @@ class LLMService:
         if not GEMINI_API_KEY:
             return "API key not configured. Please add GEMINI_API_KEY to your .env file."
        
-        # If no more predefined hints or we want a more specific hint based on current code
         try:
             prompt = self._create_hint_prompt(challenge, current_code)
-            model = genai.GenerativeModel(model_name=self.model_name)
-            response = model.generate_content(contents=prompt)
+            response = self.model.generate_content(contents=prompt)
             return response.text
         except Exception as e:
             print(f"Error calling Gemini API: {e}")
@@ -54,8 +88,7 @@ class LLMService:
         
         try:
             prompt = self._create_challenge_prompt(difficulty)
-            model = genai.GenerativeModel(model_name=self.model_name)
-            response = model.generate_content(contents=prompt)
+            response = self.model.generate_content(contents=prompt)
             
             # Parse the JSON response
             try:
@@ -125,7 +158,8 @@ class LLMService:
         4. Possible optimizations or alternative approaches
         5. Edge cases that might not be handled
         
-        Format your response in clear sections with Markdown formatting.
+        Format your response in clear sections with Markdown formatting. After the feedback, please include
+        your solution to the problem in the same language for reference.
         """
     
     def _create_hint_prompt(self, challenge, current_code=None):
