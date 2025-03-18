@@ -16,6 +16,7 @@ An interactive application to help you practice coding interview challenges, get
 ### Local Development
 1. Clone this repository to your local machine
 2. Navigate to the project directory
+3. Create .env file with your Gemini API Key such as `GEMINI_API_KEY=A...2`
 3. Run `python app.py`
 4. Select your preferred programming language from the dropdown
 5. Use the code editor to write your solution to the displayed challenge
