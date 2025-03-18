@@ -2,6 +2,8 @@
 
 An interactive application to help you practice coding interview challenges, get hints, and improve your skills.
 
+![image](https://github.com/user-attachments/assets/adfdc31f-943e-45db-9036-4b80ab7a5ed2)
+
 ## Features
 
 - **Challenge Display**: Access a variety of coding challenges
