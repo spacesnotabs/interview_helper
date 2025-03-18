@@ -11,40 +11,21 @@ An interactive application to help you practice coding interview challenges, get
 - **Solution Feedback**: Receive immediate feedback on your submissions
 - **Sample Solutions**: View optimal solutions after solving challenges
 
-## Project Structure
-
-```
-interview_helper/
-│
-├── index.html                 # Main application page
-├── static/
-│   ├── css/
-│   │   └── styles.css         # Application styling
-│   └── js/
-│       └── app.js             # Frontend JavaScript logic
-└── README.md                  # Project documentation
-```
-
 ## Setup Instructions
 
-The frontend part of this application is built with vanilla JavaScript and can be run directly in a modern web browser.
+### Local Development
+1. Clone this repository to your local machine
+2. Navigate to the project directory
+3. Run `python app.py`
+4. Select your preferred programming language from the dropdown
+5. Use the code editor to write your solution to the displayed challenge
+6. Click "Get Hint" if you need assistance
+7. Click "I'm Finished" to submit your solution for evaluation
+8. Use "New Challenge" to load another coding challenge
 
-1. Open `index.html` in your browser to start using the application.
-2. Select your preferred programming language from the dropdown.
-3. Use the code editor to write your solution to the displayed challenge.
-4. Click "Get Hint" if you need assistance.
-5. Click "I'm Finished" to submit your solution for evaluation.
-6. Use "New Challenge" to load another coding challenge.
-
-## Future Backend Implementation
-
-The frontend is designed to work with a Python Flask backend (to be implemented) that will:
-- Provide a larger database of coding challenges
-- Execute user code in a secure sandbox environment
-- Use LLM technology (like Gemini API) to:
-  - Generate custom hints
-  - Analyze code submissions
-  - Provide detailed feedback on solutions
+### Prerequisites
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- No additional dependencies for the frontend
 
 ## Technical Details
 
