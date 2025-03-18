@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the selected difficulty and additional context
             const selectedDifficulty = difficultySelector.value;
             const additionalContext = contextInput.value.trim();
+            const selectedLanguage = languageSelector.value;  // Get the selected language
             
             // Build the API URL with parameters
             let apiUrl = `${API_BASE_URL}/challenge`;
@@ -102,6 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (additionalContext) {
                 params.append('context', additionalContext);
             }
+            
+            // Add the language parameter
+            params.append('language', selectedLanguage);
             
             // Add parameters to URL if any exist
             if (params.toString()) {

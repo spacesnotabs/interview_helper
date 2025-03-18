@@ -16,8 +16,7 @@ CORS(app)  # Enable CORS for all routes
 # Initialize the LLM service
 llm_service = LLMService()
 
-# In-memory cache for generated challenges
-challenge_cache = {}
+# In-memory history for generated challenges
 challenge_history = {}
 
 @app.route('/')
@@ -46,38 +45,12 @@ def get_challenge():
         if not challenge:
             return jsonify({"error": "Failed to generate challenge. Please check API key configuration."}), 500
         
-        # Store in history (not cache) for possible revisiting
+        # Store in history for possible revisiting and to prevent repetition
         challenge_history[challenge["id"]] = challenge
     
     # Don't include hints in the initial response
     response_challenge = {k: v for k, v in challenge.items() if k != 'hints'}
     return jsonify(response_challenge)
-
-@app.route('/api/challenges', methods=['GET'])
-def get_challenges():
-    """Get multiple challenges with optional difficulty filter"""
-    count = request.args.get('count', default=5, type=int)
-    difficulty = request.args.get('difficulty')
-    additional_context = request.args.get('context')
-    language = request.args.get('language', 'javascript')  # Add language parameter
-    
-    difficulties = None
-    if difficulty:
-        difficulties = [difficulty]
-        
-    # Generate challenges using LLM
-    challenges = llm_service.generate_multiple_challenges(count, difficulties, additional_context, language)  # Pass language
-    
-    if not challenges:
-        return jsonify({"error": "Failed to generate challenges"}), 500
-    
-    # Add generated challenges to the cache
-    for challenge in challenges:
-        challenge_cache[challenge["id"]] = challenge
-    
-    # Don't include hints in the response
-    response_challenges = [{k: v for k, v in c.items() if k != 'hints'} for c in challenges]
-    return jsonify({"challenges": response_challenges})
 
 @app.route('/api/hint', methods=['POST'])
 def get_hint():
@@ -90,8 +63,8 @@ def get_hint():
     if not challenge_id:
         return jsonify({"error": "Challenge ID is required"}), 400
     
-    # Get challenge from cache
-    challenge = challenge_cache.get(challenge_id)
+    # Get challenge from history
+    challenge = challenge_history.get(challenge_id)
     
     if not challenge:
         return jsonify({"error": "Challenge not found"}), 404
@@ -119,8 +92,8 @@ def submit_solution():
     if not challenge_id or not code:
         return jsonify({"error": "Challenge ID and code are required"}), 400
     
-    # Get challenge from cache
-    challenge = challenge_cache.get(challenge_id)
+    # Get challenge from history
+    challenge = challenge_history.get(challenge_id)
     
     if not challenge:
         return jsonify({"error": "Challenge not found"}), 404
@@ -133,7 +106,7 @@ def submit_solution():
         return jsonify({"error": f"Error generating feedback: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # Initialize challenge history dict instead of cache
+    # Initialize challenge history dict
     challenge_history = {}
     
     # No need to pre-generate challenges anymore
