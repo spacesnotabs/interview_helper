@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     submitBtn.addEventListener('click', submitSolution);
 
     // Load initial challenge
-    loadNewChallenge();
+    // loadNewChallenge();
 
     // Language Change Handler
     function handleLanguageChange() {
