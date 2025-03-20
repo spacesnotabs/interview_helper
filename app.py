@@ -105,6 +105,21 @@ def submit_solution():
     except Exception as e:
         return jsonify({"error": f"Error generating feedback: {str(e)}"}), 500
 
+@app.route('/api/settings', methods=['POST'])
+def update_api_settings():
+    """Handle API settings submission (LLM and API key)"""
+    data = request.json
+    llm = data.get('llm')
+    api_key = data.get('apiKey')
+
+    # For now, just print the received data
+    print(f"Received API settings: LLM - {llm}, API Key - {api_key}")
+
+    # In the future, you would update the LLM service with the new settings here
+    # llm_service.update_settings(llm, api_key)
+
+    return jsonify({"message": "API settings updated successfully"}), 200
+
 if __name__ == '__main__':
     # Initialize challenge history dict
     challenge_history = {}

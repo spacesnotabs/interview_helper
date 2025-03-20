@@ -36,6 +36,7 @@
                     <input type="text" id="context-input" placeholder="Topic (e.g. trees, arrays, recursion...)">
                 </div>
                 <button id="new-challenge-btn" class="btn primary">New Challenge</button>
+                <button id="api-settings-btn" class="btn secondary">API Settings</button>
             </div>
         </header>
 
@@ -69,6 +70,22 @@
         <footer>
             <p>Interview Helper &copy; 2023 - Your coding interview companion</p>
         </footer>
+
+        <div id="api-settings-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>API Settings</h2>
+                <label for="llm-selector">Select LLM:</label>
+                <select id="llm-selector">
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="gemini">Google Gemini</option>
+                </select>
+                <label for="api-key-input" id="api-key-label">OpenAI API Key:</label>
+                <input type="text" id="api-key-input" placeholder="Enter API Key">
+                <button id="save-api-settings-btn" class="btn primary">Save</button>
+            </div>
+        </div>
     </div>
 
     <script src="static/js/app.js"></script>
