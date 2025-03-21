@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const challengeTitle = document.getElementById('challenge-title');
     const challengeDescription = document.getElementById('challenge-description');
     const resultsDisplay = document.getElementById('results-display');
+    const authBtn = document.getElementById('auth-btn');
 
     // Backend API endpoint
     const API_BASE_URL = '/api';
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Current challenge data
     let currentChallenge = null;
     let currentHintIndex = 0;
+    
+    // User authentication state
+    let currentUser = null;
     
     // Language mode mapping
     const languageModes = {
@@ -296,6 +300,221 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show loading state in a container
     function showLoading(container) {
         container.innerHTML = '<p class="loading">Loading...</p>';
+    }
+    
+    // Authentication functionality
+    
+    // Get references to authentication modal elements
+    const authModal = document.getElementById('auth-modal');
+    const loginTab = document.getElementById('login-tab');
+    const registerTab = document.getElementById('register-tab');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    const registerUsername = document.getElementById('register-username');
+    const registerPassword = document.getElementById('register-password');
+    const registerPasswordConfirm = document.getElementById('register-password-confirm');
+    const loginError = document.getElementById('login-error');
+    const registerError = document.getElementById('register-error');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const modalCloseBtns = document.querySelectorAll('.close-button');
+    
+    // Add event listeners for authentication
+    authBtn.addEventListener('click', showAuthModal);
+    loginTab.addEventListener('click', () => switchAuthTab('login'));
+    registerTab.addEventListener('click', () => switchAuthTab('register'));
+    loginBtn.addEventListener('click', handleLogin);
+    registerBtn.addEventListener('click', handleRegister);
+    
+    modalCloseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        });
+    });
+    
+    // Check if user is already logged in on page load
+    checkAuthStatus();
+    
+    // Show the authentication modal
+    function showAuthModal() {
+        // If user is already logged in, log them out
+        if (currentUser) {
+            handleLogout();
+            return;
+        }
+        
+        // Otherwise, show the auth modal
+        authModal.style.display = 'block';
+    }
+    
+    // Switch between login and register tabs
+    function switchAuthTab(tab) {
+        if (tab === 'login') {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        } else {
+            loginTab.classList.remove('active');
+            registerTab.classList.add('active');
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+        }
+        
+        // Clear any error messages
+        loginError.textContent = '';
+        registerError.textContent = '';
+    }
+    
+    // Handle login form submission
+    async function handleLogin() {
+        const username = loginUsername.value.trim();
+        const password = loginPassword.value;
+        
+        // Simple validation
+        if (!username || !password) {
+            loginError.textContent = 'Username and password are required';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Login successful
+                currentUser = data.user;
+                authModal.style.display = 'none';
+                updateAuthUI();
+                // Optionally, show a success message
+                showUserMessage('Login successful!', 'success');
+            } else {
+                // Login failed
+                loginError.textContent = data.error || 'Login failed';
+            }
+        } catch (error) {
+            console.error('Error during login:', error);
+            loginError.textContent = 'An error occurred during login. Please try again.';
+        }
+    }
+    
+    // Handle register form submission
+    async function handleRegister() {
+        const username = registerUsername.value.trim();
+        const password = registerPassword.value;
+        const confirmPassword = registerPasswordConfirm.value;
+        
+        // Validation
+        if (!username || !password) {
+            registerError.textContent = 'Username and password are required';
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            registerError.textContent = 'Passwords do not match';
+            return;
+        }
+        
+        // Basic password strength check
+        if (password.length < 6) {
+            registerError.textContent = 'Password should be at least 6 characters long';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Registration successful - auto-login the user
+                currentUser = data.user;
+                authModal.style.display = 'none';
+                updateAuthUI();
+                showUserMessage('Account created successfully!', 'success');
+            } else {
+                // Registration failed
+                registerError.textContent = data.error || 'Registration failed';
+            }
+        } catch (error) {
+            console.error('Error during registration:', error);
+            registerError.textContent = 'An error occurred during registration. Please try again.';
+        }
+    }
+    
+    // Handle user logout
+    async function handleLogout() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Logout successful
+                currentUser = null;
+                updateAuthUI();
+                showUserMessage('Logged out successfully!', 'success');
+            } else {
+                console.error('Logout failed');
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    }
+    
+    // Check if the user is already authenticated
+    async function checkAuthStatus() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/user`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                currentUser = data;
+                updateAuthUI();
+            }
+        } catch (error) {
+            console.error('Error checking authentication status:', error);
+        }
+    }
+    
+    // Update the UI based on authentication status
+    function updateAuthUI() {
+        if (currentUser) {
+            // User is logged in
+            authBtn.textContent = `Logout (${currentUser.username})`;
+        } else {
+            // User is not logged in
+            authBtn.textContent = 'Login / Register';
+        }
+    }
+    
+    // Display a temporary message to the user
+    function showUserMessage(message, type) {
+        resultsDisplay.innerHTML = `<p class="${type}">${message}</p>`;
+        
+        // Clear the message after a few seconds
+        setTimeout(() => {
+            resultsDisplay.innerHTML = '<p>Submit your solution or request a hint to see feedback...</p>';
+        }, 3000);
     }
 });
 

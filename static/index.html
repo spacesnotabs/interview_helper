@@ -37,6 +37,7 @@
                 </div>
                 <button id="new-challenge-btn" class="btn primary">New Challenge</button>
                 <button id="api-settings-btn" class="btn secondary">API Settings</button>
+                <button id="auth-btn" class="btn primary">Login / Register</button>
             </div>
         </header>
 
@@ -84,6 +85,51 @@
                 <label for="api-key-input" id="api-key-label">OpenAI API Key:</label>
                 <input type="text" id="api-key-input" placeholder="Enter API Key">
                 <button id="save-api-settings-btn" class="btn primary">Save</button>
+            </div>
+        </div>
+
+        <!-- New Authentication Modal -->
+        <div id="auth-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <div class="auth-tabs">
+                    <button id="login-tab" class="auth-tab active">Login</button>
+                    <button id="register-tab" class="auth-tab">Register</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form">
+                    <h2>Login</h2>
+                    <div class="form-group">
+                        <label for="login-username">Username:</label>
+                        <input type="text" id="login-username" placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" placeholder="Enter your password">
+                    </div>
+                    <div class="form-error" id="login-error"></div>
+                    <button id="login-btn" class="btn primary">Login</button>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="register-form" class="auth-form" style="display: none;">
+                    <h2>Create Account</h2>
+                    <div class="form-group">
+                        <label for="register-username">Username:</label>
+                        <input type="text" id="register-username" placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password:</label>
+                        <input type="password" id="register-password" placeholder="Choose a password">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password-confirm">Confirm Password:</label>
+                        <input type="password" id="register-password-confirm" placeholder="Confirm your password">
+                    </div>
+                    <div class="form-error" id="register-error"></div>
+                    <button id="register-btn" class="btn primary">Create Account</button>
+                </div>
             </div>
         </div>
     </div>
