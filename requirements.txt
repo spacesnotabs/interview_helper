@@ -3,3 +3,8 @@ flask-cors==4.0.0
 requests==2.31.0
 python-dotenv==1.0.0
 google-generativeai
+sqlalchemy==2.0.23
+werkzeug==2.3.7
+# Database driver options (uncomment as needed)
+# pymysql==1.1.0  # For MySQL
+# psycopg2-binary==2.9.9  # For PostgreSQL
