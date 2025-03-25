@@ -207,5 +207,4 @@ if __name__ == '__main__':
     
     # No need to pre-generate challenges anymore
     # The app will generate fresh challenges on demand
-    
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
