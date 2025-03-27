@@ -57,9 +57,11 @@ class DatabaseConfig:
         elif self.db_type == 'mysql':
             return f'mysql+pymysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port or 3306}/{self.db_name}'
         elif self.db_type == 'postgresql':
-            return f'postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port or 5432}/{self.db_name}'
+            uri=f'postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port or 5432}/{self.db_name}'
+            print(uri)
+            return uri
         else:
             raise ValueError(f"Unsupported database type: {self.db_type}")
 
 # Default configuration
-default_config = DatabaseConfig()
+# default_config = DatabaseConfig()

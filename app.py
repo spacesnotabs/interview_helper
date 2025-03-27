@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import os
-import json
-import random
 from dotenv import load_dotenv
 from llm_service import LLMService
+
 # Import database components
-from database import db_session, init_db, User
+from database.database import get_db_session, init_db_schema, init_db_connection
+from database.config import DatabaseConfig
+from database.models import User
 
 # Load environment variables
 load_dotenv()
@@ -16,13 +17,28 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 CORS(app)  # Enable CORS for all routes
 
+# Create custom configuration
+custom_config = DatabaseConfig(
+    db_name=os.environ.get('DB_NAME', 'interview_helper'),
+    db_type='postgresql',
+    db_host=os.environ.get('DB_HOST', 'localhost'),
+    db_user=os.environ.get('DB_USER', 'user'),
+    db_password=os.environ.get('DB_PASSWORD', 'password'),
+    db_port=os.environ.get('DB_PORT', 5432),
+)
+
+# Configure database with custom settings
+init_db_connection(custom_config)
+
 # Initialize the database
-init_db()
+init_db_schema()
 
 # Teardown database session after each request
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    db_session.remove()
+    db = get_db_session()
+    if db is not None:
+        db.remove()
 
 # Initialize the LLM service
 llm_service = LLMService()
@@ -53,11 +69,12 @@ def register():
     # Create new user
     try:
         user = User(username=username, password=password)
-        db_session.add(user)
-        db_session.commit()
+        db = get_db_session()
+        db.add(user)
+        db.commit()
         return jsonify({"message": "User registered successfully", "user": user.to_dict()}), 201
     except Exception as e:
-        db_session.rollback()
+        get_db_session().rollback()
         return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 @app.route('/api/login', methods=['POST'])

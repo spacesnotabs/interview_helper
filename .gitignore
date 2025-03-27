@@ -1,5 +1,7 @@
-.venv/*
 .env
+alembic.ini
+alembic/*
+.venv/*
 *.pyc
 __pycache__/    
 *.db    

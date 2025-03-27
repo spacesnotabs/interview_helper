@@ -12,7 +12,7 @@ class User(Base):
     
     id = Column(Integer, primary_key=True)
     username = Column(String(64), unique=True, index=True, nullable=False)
-    password_hash = Column(String(128), nullable=False)
+    password_hash = Column(String(256), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     def __init__(self, username, password):
