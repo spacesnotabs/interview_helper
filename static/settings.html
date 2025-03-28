@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Settings - Interview Helper</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interview Helper - API Settings</h1>
+            <div class="controls">
+                <a href="/" class="btn secondary">Back to Home</a>
+            </div>
+        </header>
+
+        <main>
+            <section class="settings-section">
+                <h2>LLM API Settings</h2>
+                <p>Manage your LLM API keys for interview practice. Your API keys are stored securely and used only for your account.</p>
+                
+                <div id="api-key-list" class="api-key-list">
+                    <div class="loading-placeholder">Loading your API keys...</div>
+                </div>
+                
+                <div class="add-api-key-form">
+                    <h3>Add/Edit API Key</h3>
+                    <form id="api-key-form">
+                        <input type="hidden" id="api-key-id" value="">
+                        
+                        <div class="form-group">
+                            <label for="llm-provider">LLM Provider:</label>
+                            <select id="llm-provider" required>
+                                <option value="">-- Select Provider --</option>
+                                <option value="GEMINI">Google Gemini</option>
+                                <option value="ANTHROPIC">Anthropic</option>
+                                <option value="OPENAI">OpenAI</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="llm-model">Model:</label>
+                            <select id="llm-model" required>
+                                <option value="">-- Select Model --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api-key">API Key:</label>
+                            <input type="password" id="api-key" placeholder="Enter your API key" required>
+                            <button type="button" id="toggle-visibility" class="btn small">Show</button>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" id="save-key-btn" class="btn primary">Save API Key</button>
+                            <button type="button" id="cancel-btn" class="btn secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <div id="message-container" class="message-container"></div>
+
+        <footer>
+            <p>Interview Helper &copy; 2025 - Your coding interview companion</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/settings.js"></script>
+</body>
+</html>

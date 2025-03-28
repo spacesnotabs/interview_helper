@@ -7,7 +7,7 @@ from llm_service import LLMService
 # Import database components
 from database.database import get_db_session, init_db_schema, init_db_connection
 from database.config import DatabaseConfig
-from database.models import User
+from database.models import User, LlmApiKey, LlmProvider
 
 # Load environment variables
 load_dotenv()
@@ -217,6 +217,154 @@ def update_api_settings():
     # llm_service.update_settings(llm, api_key)
 
     return jsonify({"message": "API settings updated successfully"}), 200
+
+# API Key Management Routes
+@app.route('/api/api-keys', methods=['GET'])
+def get_api_keys():
+    """Get all API keys for the current user"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    try:
+        db = get_db_session()
+        api_keys = LlmApiKey.query.filter_by(user_id=user_id).all()
+        
+        return jsonify({
+            "apiKeys": [key.to_dict() for key in api_keys]
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error retrieving API keys: {str(e)}"}), 500
+
+@app.route('/api/api-keys', methods=['POST'])
+def add_api_key():
+    """Add a new API key for the current user"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    data = request.json
+    llm_provider = data.get('llm_provider')
+    model = data.get('model')
+    api_key = data.get('api_key')
+    
+    if not llm_provider or not api_key:
+        return jsonify({"error": "Provider and API key are required"}), 400
+    
+    try:
+        # Convert string to enum
+        provider_enum = LlmProvider[llm_provider]
+        
+        # Create new API key entry
+        new_api_key = LlmApiKey(user_id=user_id, llm_provider=provider_enum, api_key=api_key)
+        
+        # Add optional model field
+        if model:
+            new_api_key.model = model
+        
+        # Save to database
+        db = get_db_session()
+        db.add(new_api_key)
+        db.commit()
+        
+        print(f"Added new API key: Provider={llm_provider}, Model={model}")
+        
+        return jsonify({
+            "message": "API key added successfully",
+            "api_key": new_api_key.to_dict()
+        }), 201
+    except KeyError:
+        return jsonify({"error": f"Invalid provider: {llm_provider}"}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Error adding API key: {str(e)}"}), 500
+
+@app.route('/api/api-keys/<int:key_id>', methods=['PUT'])
+def update_api_key(key_id):
+    """Update an existing API key"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    data = request.json
+    llm_provider = data.get('llm_provider')
+    model = data.get('model')
+    api_key = data.get('api_key')
+    
+    if not llm_provider:
+        return jsonify({"error": "Provider is required"}), 400
+    
+    try:
+        # Get the API key from the database
+        db = get_db_session()
+        api_key_entry = LlmApiKey.query.filter_by(id=key_id, user_id=user_id).first()
+        
+        if not api_key_entry:
+            return jsonify({"error": "API key not found or not owned by current user"}), 404
+        
+        # Convert string to enum
+        provider_enum = LlmProvider[llm_provider]
+        
+        # Update fields
+        api_key_entry.llm_provider = provider_enum
+        
+        if model:
+            api_key_entry.model = model
+        
+        # Only update the API key if provided (allows updating provider/model without changing key)
+        if api_key:
+            api_key_entry.api_key = api_key
+        
+        # Save changes
+        db.commit()
+        
+        print(f"Updated API key {key_id}: Provider={llm_provider}, Model={model}")
+        
+        return jsonify({
+            "message": "API key updated successfully",
+            "api_key": api_key_entry.to_dict()
+        })
+    except KeyError:
+        return jsonify({"error": f"Invalid provider: {llm_provider}"}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Error updating API key: {str(e)}"}), 500
+
+@app.route('/api/api-keys/<int:key_id>', methods=['DELETE'])
+def delete_api_key(key_id):
+    """Delete an API key"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    try:
+        db = get_db_session()
+        api_key_entry = LlmApiKey.query.filter_by(id=key_id, user_id=user_id).first()
+        
+        if not api_key_entry:
+            return jsonify({"error": "API key not found or not owned by current user"}), 404
+        
+        # Delete the API key
+        db.delete(api_key_entry)
+        db.commit()
+        
+        print(f"Deleted API key {key_id}")
+        
+        return jsonify({
+            "message": "API key deleted successfully"
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": f"Error deleting API key: {str(e)}"}), 500
+
+# Add a route to get the settings.html page
+@app.route('/settings')
+def settings_page():
+    return app.send_static_file('settings.html')
 
 if __name__ == '__main__':
     # Initialize challenge history dict

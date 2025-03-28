@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const challengeDescription = document.getElementById('challenge-description');
     const resultsDisplay = document.getElementById('results-display');
     const authBtn = document.getElementById('auth-btn');
+    const apiSettingsBtn = document.getElementById('api-settings-btn');
 
     // Backend API endpoint
     const API_BASE_URL = '/api';
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     languageSelector.addEventListener('change', handleLanguageChange);
     difficultySelector.addEventListener('change', updateDifficultyDisplay);
     newChallengeBtn.addEventListener('click', loadNewChallenge);
+    apiSettingsBtn.addEventListener('click', navigateToSettings);
 
     // LLM Selector and API Key Input
     const llmSelector = document.getElementById('llm-selector');
@@ -516,53 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
             resultsDisplay.innerHTML = '<p>Submit your solution or request a hint to see feedback...</p>';
         }, 3000);
     }
-});
 
-// API Settings Modal Controls
-const apiSettingsBtn = document.getElementById('api-settings-btn');
-const apiSettingsModal = document.getElementById('api-settings-modal');
-const modalCloseBtn = apiSettingsModal.querySelector('.close-button');
-
-apiSettingsBtn.addEventListener('click', showApiSettingsModal);
-modalCloseBtn.addEventListener('click', hideApiSettingsModal);
-
-function showApiSettingsModal() {
-    apiSettingsModal.style.display = 'block';
-}
-
-function hideApiSettingsModal() {
-    apiSettingsModal.style.display = 'none';
-}
-
-// API Settings Submission
-const saveApiSettingsBtn = document.getElementById('save-api-settings-btn');
-
-saveApiSettingsBtn.addEventListener('click', submitApiSettings);
-
-async function submitApiSettings() {
-    const selectedLLM = llmSelector.value;
-    const apiKey = apiKeyInput.value;
-
-    // Create a dummy request to the backend (replace with actual API call later)
-    const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            llm: selectedLLM,
-            apiKey: apiKey
-        })
-    });
-
-    if (response.ok) {
-        console.log('API settings submitted successfully!');
-        hideApiSettingsModal();
-        // Optional: Provide feedback to the user
-        // resultsDisplay.innerHTML = '<p class="success">API settings saved successfully!</p>';
-    } else {
-        console.error('Failed to submit API settings.');
-        // Optional: Display error message to the user
-        // resultsDisplay.innerHTML = '<p class="error">Failed to save API settings.</p>';
+    // Navigate to settings page
+    function navigateToSettings() {
+        window.location.href = '/settings';
     }
-}
+});
