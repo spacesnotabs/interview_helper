@@ -7,9 +7,6 @@ import uuid
 # Load environment variables
 load_dotenv()
 
-# Configure the Gemini API
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
 class LLMService:
     def __init__(self):
         self.model_name: str | None = None
@@ -18,13 +15,10 @@ class LLMService:
         self.chat = None
         self.previous_challenges: list[str] = []  # Track previous challenge titles/descriptions
         
-        if not GEMINI_API_KEY:
-            print("Warning: GEMINI_API_KEY not set in environment variables")
-    
     @property
     def model(self):
         """Lazily initialize and return the model"""
-        if not self._model and GEMINI_API_KEY:
+        if not self._model and self.api_key:
             self._model = genai.GenerativeModel(model_name=self.model_name)
         return self._model
     
@@ -33,8 +27,6 @@ class LLMService:
         if api_key:
             self.api_key = api_key
             genai.configure(api_key=self.api_key)
-        elif GEMINI_API_KEY:
-            genai.configure(api_key=GEMINI_API_KEY)
         else:
             return "API key not configured."
         
@@ -52,9 +44,6 @@ class LLMService:
             
     def start_new_chat(self, history=None):
         """Start a new chat session with the model"""
-        if not GEMINI_API_KEY:
-            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
-        
         try:
             self.chat = self.model.start_chat(history=history)
             return "New chat session started successfully."
@@ -64,9 +53,6 @@ class LLMService:
     
     def chat_message(self, message):
         """Send a message to the active chat session and get a response"""
-        if not GEMINI_API_KEY:
-            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
-        
         if not self.chat:
             self.start_new_chat()
         
@@ -89,9 +75,6 @@ class LLMService:
     
     def get_hint(self, challenge, current_code=None, hint_index=0):
         """Generate a hint for the challenge, considering the current code if provided"""
-        if not GEMINI_API_KEY:
-            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
-       
         try:
             prompt = self._create_hint_prompt(challenge, current_code)
             response = self.model.generate_content(contents=prompt)
@@ -102,9 +85,6 @@ class LLMService:
     
     def generate_challenge(self, difficulty=None, additional_context=None, language="javascript"):
         """Generate a single coding challenge using LLM"""
-        if not GEMINI_API_KEY:
-            return None
-        
         try:
             prompt = self._create_challenge_prompt(difficulty, additional_context, language)
             response = self.model.generate_content(contents=prompt)
