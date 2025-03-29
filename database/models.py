@@ -9,11 +9,54 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from .database import Base
 
 
+class LlmModel(enum.Enum):
+    """Available LLM models."""
+    # Gemini models
+    GEMINI_2_FLASH = "gemini-2.0-flash"
+    GEMINI_2_PRO = "gemini-2.0-pro"
+    GEMINI_15_PRO = "gemini-1.5-pro"
+    GEMINI_1_PRO = "gemini-1.0-pro"
+    # Claude models
+    CLAUDE_3_OPUS = "claude-3-opus"
+    CLAUDE_3_SONNET = "claude-3-sonnet"
+    CLAUDE_3_HAIKU = "claude-3-haiku"
+    CLAUDE_2_1 = "claude-2.1"
+    # OpenAI models
+    GPT_4O = "gpt-4o"
+    GPT_4_TURBO = "gpt-4-turbo"
+    GPT_4 = "gpt-4"
+    GPT_35_TURBO = "gpt-3.5-turbo"
+
+
 class LlmProvider(enum.Enum):
     """Available LLM providers."""
     OPENAI = "OpenAI"
     ANTHROPIC = "Anthropic"
     GEMINI = "Gemini"
+
+    def get_models(self):
+        """Get available models for this provider."""
+        models_map = {
+            self.GEMINI: [
+                {"value": LlmModel.GEMINI_2_FLASH.value, "label": "Gemini 2.0 Flash"},
+                {"value": LlmModel.GEMINI_2_PRO.value, "label": "Gemini 2.0 Pro"},
+                {"value": LlmModel.GEMINI_15_PRO.value, "label": "Gemini 1.5 Pro"},
+                {"value": LlmModel.GEMINI_1_PRO.value, "label": "Gemini 1.0 Pro"}
+            ],
+            self.ANTHROPIC: [
+                {"value": LlmModel.CLAUDE_3_OPUS.value, "label": "Claude 3 Opus"},
+                {"value": LlmModel.CLAUDE_3_SONNET.value, "label": "Claude 3 Sonnet"},
+                {"value": LlmModel.CLAUDE_3_HAIKU.value, "label": "Claude 3 Haiku"},
+                {"value": LlmModel.CLAUDE_2_1.value, "label": "Claude 2.1"}
+            ],
+            self.OPENAI: [
+                {"value": LlmModel.GPT_4O.value, "label": "GPT-4o"},
+                {"value": LlmModel.GPT_4_TURBO.value, "label": "GPT-4 Turbo"},
+                {"value": LlmModel.GPT_4.value, "label": "GPT-4"},
+                {"value": LlmModel.GPT_35_TURBO.value, "label": "GPT-3.5 Turbo"}
+            ]
+        }
+        return models_map[self]
 
 
 class User(Base):

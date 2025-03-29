@@ -127,7 +127,10 @@ def get_challenge():
     challenge_id = request.args.get('id')
     difficulty = request.args.get('difficulty')
     additional_context = request.args.get('context')
-    language = request.args.get('language', 'javascript')  # Add language parameter
+    language = request.args.get('language', 'javascript')
+    # Add model selection parameters
+    provider = request.args.get('provider')
+    key_id = request.args.get('key_id')
     
     if challenge_id:
         # If a specific ID is requested, look it up in the challenge_history
@@ -138,7 +141,13 @@ def get_challenge():
             return jsonify({"error": "Challenge not found"}), 404
     else:
         # Generate a new random challenge using LLM
-        challenge = llm_service.generate_challenge(difficulty, additional_context, language)  # Pass language
+        # Pass model selection parameters if available
+        model_params = {}
+        if provider and key_id:
+            model_params['provider'] = provider
+            model_params['key_id'] = key_id
+            
+        challenge = llm_service.generate_challenge(difficulty, additional_context, language, **model_params)
         
         if not challenge:
             return jsonify({"error": "Failed to generate challenge. Please check API key configuration."}), 500
@@ -360,6 +369,20 @@ def delete_api_key(key_id):
     except Exception as e:
         db.rollback()
         return jsonify({"error": f"Error deleting API key: {str(e)}"}), 500
+
+@app.route('/api/llm-models/<provider>', methods=['GET'])
+def get_llm_models(provider):
+    """Get available models for a specific LLM provider"""
+    try:
+        # Convert string to enum (will raise KeyError if invalid)
+        provider_enum = LlmProvider[provider.upper()]
+        # Get models using the enum method
+        models = provider_enum.get_models()
+        return jsonify(models)
+    except KeyError:
+        return jsonify({"error": f"Invalid provider: {provider}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error retrieving models: {str(e)}"}), 500
 
 # Add a route to get the settings.html page
 @app.route('/settings')

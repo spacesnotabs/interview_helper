@@ -14,28 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Backend API endpoint
     const API_BASE_URL = '/api';
-    
-    // Model options for each provider
-    const modelOptions = {
-        'GEMINI': [
-            { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-            { value: 'gemini-2.0-pro', label: 'Gemini 2.0 Pro' },
-            { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-            { value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' }
-        ],
-        'ANTHROPIC': [
-            { value: 'claude-3-opus', label: 'Claude 3 Opus' },
-            { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet' },
-            { value: 'claude-3-haiku', label: 'Claude 3 Haiku' },
-            { value: 'claude-2.1', label: 'Claude 2.1' }
-        ],
-        'OPENAI': [
-            { value: 'gpt-4o', label: 'GPT-4o' },
-            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-            { value: 'gpt-4', label: 'GPT-4' },
-            { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
-        ]
-    };
 
     // Event Listeners
     llmProviderSelect.addEventListener('change', updateModelOptions);
@@ -273,17 +251,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Update model options based on selected provider
-    function updateModelOptions() {
+    async function updateModelOptions() {
         const provider = llmProviderSelect.value;
         llmModelSelect.innerHTML = '<option value="">-- Select Model --</option>';
         
-        if (provider && modelOptions[provider]) {
-            modelOptions[provider].forEach(model => {
-                const option = document.createElement('option');
-                option.value = model.value;
-                option.textContent = model.label;
-                llmModelSelect.appendChild(option);
-            });
+        if (provider) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/llm-models/${provider}`);
+                if (response.ok) {
+                    const models = await response.json();
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.value;
+                        option.textContent = model.label;
+                        llmModelSelect.appendChild(option);
+                    });
+                } else {
+                    showMessage('Failed to load model options', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading model options:', error);
+                showMessage('Error loading model options', 'error');
+            }
         }
     }
 

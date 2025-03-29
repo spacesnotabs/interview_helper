@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const languageSelector = document.getElementById('language-selector');
+    const modelSelector = document.getElementById('model-selector');
     const difficultySelector = document.getElementById('difficulty-selector');
     const contextInput = document.getElementById('context-input');
     const newChallengeBtn = document.getElementById('new-challenge-btn');
@@ -46,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // User authentication state
     let currentUser = null;
     
+    // Available models from API keys
+    let availableModels = [];
+    
     // Language mode mapping
     const languageModes = {
         'javascript': 'javascript',
@@ -56,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event Listeners
     languageSelector.addEventListener('change', handleLanguageChange);
+    modelSelector.addEventListener('change', updateModelSelection);
     difficultySelector.addEventListener('change', updateDifficultyDisplay);
     newChallengeBtn.addEventListener('click', loadNewChallenge);
     apiSettingsBtn.addEventListener('click', navigateToSettings);
@@ -123,7 +128,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the selected difficulty and additional context
             const selectedDifficulty = difficultySelector.value;
             const additionalContext = contextInput.value.trim();
-            const selectedLanguage = languageSelector.value;  // Get the selected language
+            const selectedLanguage = languageSelector.value;
+            
+            // Get the selected model
+            let modelData = null;
+            if (modelSelector.value) {
+                try {
+                    modelData = JSON.parse(modelSelector.value);
+                } catch (e) {
+                    console.error('Error parsing model data:', e);
+                }
+            }
             
             // Build the API URL with parameters
             let apiUrl = `${API_BASE_URL}/challenge`;
@@ -139,6 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add the language parameter
             params.append('language', selectedLanguage);
+            
+            // Add model parameters if selected
+            if (modelData) {
+                params.append('provider', modelData.provider);
+                params.append('key_id', modelData.key_id);
+            }
             
             // Add parameters to URL if any exist
             if (params.toString()) {
@@ -168,17 +189,35 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading(resultsDisplay);
         
         try {
+            // Get the selected model
+            let modelData = null;
+            if (modelSelector.value) {
+                try {
+                    modelData = JSON.parse(modelSelector.value);
+                } catch (e) {
+                    console.error('Error parsing model data:', e);
+                }
+            }
+            
             // Call the backend API to get a hint
+            const payload = {
+                challengeId: currentChallenge.id,
+                hintIndex: currentHintIndex,
+                code: codeEditor.getValue()  // Send the current code for context-aware hints
+            };
+            
+            // Add model data if available
+            if (modelData) {
+                payload.provider = modelData.provider;
+                payload.key_id = modelData.key_id;
+            }
+            
             const response = await fetch(`${API_BASE_URL}/hint`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    challengeId: currentChallenge.id,
-                    hintIndex: currentHintIndex,
-                    code: codeEditor.getValue()  // Send the current code for context-aware hints
-                })
+                body: JSON.stringify(payload)
             });
             
             const data = await response.json();
@@ -211,17 +250,36 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading(resultsDisplay);
         
         try {
+            // Get the selected model
+            let modelData = null;
+            if (modelSelector.value) {
+                try {
+                    modelData = JSON.parse(modelSelector.value);
+                } catch (e) {
+                    console.error('Error parsing model data:', e);
+                }
+            }
+            
+            // Prepare the payload
+            const payload = {
+                challengeId: currentChallenge.id,
+                code: userCode,
+                language: language
+            };
+            
+            // Add model data if available
+            if (modelData) {
+                payload.provider = modelData.provider;
+                payload.key_id = modelData.key_id;
+            }
+            
             // Call the backend API to submit the solution
             const response = await fetch(`${API_BASE_URL}/submit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    challengeId: currentChallenge.id,
-                    code: userCode,
-                    language: language
-                })
+                body: JSON.stringify(payload)
             });
             
             const data = await response.json();
@@ -398,6 +456,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentUser = data.user;
                 authModal.style.display = 'none';
                 updateAuthUI();
+                
+                // New: Handle post-login actions
+                await handleLoginSuccess();
+                
                 // Optionally, show a success message
                 showUserMessage('Login successful!', 'success');
             } else {
@@ -492,6 +554,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 currentUser = data;
                 updateAuthUI();
+                
+                // Once user is authenticated, load their available models
+                await loadAvailableModels();
             }
         } catch (error) {
             console.error('Error checking authentication status:', error);
@@ -503,9 +568,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentUser) {
             // User is logged in
             authBtn.textContent = `Logout (${currentUser.username})`;
+            
+            // Load available models when user is logged in
+            loadAvailableModels();
         } else {
             // User is not logged in
             authBtn.textContent = 'Login / Register';
+            
+            // Reset model selector when user logs out
+            modelSelector.innerHTML = '<option value="">Login to use models</option>';
+            modelSelector.disabled = true;
         }
     }
     
@@ -522,5 +594,78 @@ document.addEventListener('DOMContentLoaded', function() {
     // Navigate to settings page
     function navigateToSettings() {
         window.location.href = '/settings';
+    }
+    
+    // Function to update model dropdown based on available API keys
+    async function loadAvailableModels() {
+        try {
+            // Only attempt to load models if user is logged in
+            if (!currentUser) {
+                modelSelector.innerHTML = '<option value="">Login to use models</option>';
+                modelSelector.disabled = true;
+                return;
+            }
+            
+            // Fetch available API keys for the user
+            const response = await fetch(`${API_BASE_URL}/api-keys`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                availableModels = [];
+                
+                // Clear the current options
+                modelSelector.innerHTML = '<option value="">Choose a model</option>';
+                
+                // If there are no API keys, show a message
+                if (!data.apiKeys || data.apiKeys.length === 0) {
+                    modelSelector.innerHTML = '<option value="">No API keys configured</option>';
+                    modelSelector.disabled = true;
+                    return;
+                }
+                
+                // For each API key, create a model option
+                data.apiKeys.forEach(key => {
+                    // Format provider name for display
+                    const providerName = key.llm_provider;
+                    
+                    // Add option for the provider
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify({ provider: providerName, key_id: key.id });
+                    option.textContent = providerName + (key.model ? ` - ${key.model}` : '');
+                    modelSelector.appendChild(option);
+                    
+                    // Add to available models array
+                    availableModels.push({
+                        provider: providerName,
+                        key_id: key.id,
+                        model: key.model
+                    });
+                });
+                
+                modelSelector.disabled = false;
+            } else {
+                // Error fetching API keys
+                modelSelector.innerHTML = '<option value="">Error loading models</option>';
+                modelSelector.disabled = true;
+            }
+        } catch (error) {
+            console.error('Error loading available models:', error);
+            modelSelector.innerHTML = '<option value="">Error loading models</option>';
+            modelSelector.disabled = true;
+        }
+    }
+    
+    // Function to handle model selection change
+    function updateModelSelection() {
+        // This function can be expanded later if needed
+        console.log('Model selection changed:', modelSelector.value);
+    }
+    
+    // Add this function to handle post-login actions
+    async function handleLoginSuccess() {
+        // Other login logic...
+        
+        // Load available models after successful login
+        await loadAvailableModels();
     }
 });

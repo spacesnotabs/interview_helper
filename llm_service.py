@@ -9,15 +9,14 @@ load_dotenv()
 
 # Configure the Gemini API
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
 
 class LLMService:
-    def __init__(self, model_name="gemini-2.0-flash"):
-        self.model_name = model_name
+    def __init__(self):
+        self.model_name: str | None = None
+        self.api_key: str | None = None
         self._model = None
         self.chat = None
-        self.previous_challenges = []  # Track previous challenge titles/descriptions
+        self.previous_challenges: list[str] = []  # Track previous challenge titles/descriptions
         
         if not GEMINI_API_KEY:
             print("Warning: GEMINI_API_KEY not set in environment variables")
@@ -29,6 +28,28 @@ class LLMService:
             self._model = genai.GenerativeModel(model_name=self.model_name)
         return self._model
     
+    def initialize_model(self, model_name: str, api_key: str | None=None):
+        """Initialize the model with the provided API key and model name"""
+        if api_key:
+            self.api_key = api_key
+            genai.configure(api_key=self.api_key)
+        elif GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
+        else:
+            return "API key not configured."
+        
+        if model_name:
+            self.model_name = model_name
+        else:
+            return "Model name not provided."
+        
+        try:
+            self._model = genai.GenerativeModel(model_name=self.model_name)
+            return "Model initialized successfully."
+        except Exception as e:
+            print(f"Error initializing model: {e}")
+            return f"Error initializing model. Please check your API key and model name. Error details: {str(e)}"
+            
     def start_new_chat(self, history=None):
         """Start a new chat session with the model"""
         if not GEMINI_API_KEY:
