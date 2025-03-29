@@ -79,9 +79,6 @@ class LLMService:
     
     def get_solution_feedback(self, challenge, code, language="javascript"):
         """Generate feedback for a submitted solution"""
-        if not GEMINI_API_KEY:
-            return "API key not configured. Please add GEMINI_API_KEY to your .env file."
-        
         try:
             prompt = self._create_feedback_prompt(challenge, code, language)
             response = self.model.generate_content(contents=prompt)
@@ -141,7 +138,7 @@ class LLMService:
                 return challenge_data
             except json.JSONDecodeError as e:
                 print(f"Error parsing challenge JSON: {e}")
-                print(f"Raw response: {response.result}")
+                print(f"Raw response: {response.text}")
                 return None
         except Exception as e:
             print(f"Error calling Gemini API: {e}")

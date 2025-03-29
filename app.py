@@ -130,7 +130,7 @@ def get_challenge():
     language = request.args.get('language', 'javascript')
     # Add model selection parameters
     provider = request.args.get('provider')
-    key_id = request.args.get('key_id')
+    model = request.args.get('model')  # Added model parameter
     
     if challenge_id:
         # If a specific ID is requested, look it up in the challenge_history
@@ -140,14 +140,29 @@ def get_challenge():
         if not challenge:
             return jsonify({"error": "Challenge not found"}), 404
     else:
-        # Generate a new random challenge using LLM
-        # Pass model selection parameters if available
-        model_params = {}
-        if provider and key_id:
-            model_params['provider'] = provider
-            model_params['key_id'] = key_id
+        # Fetch API key for the selected provider
+        api_key = None
+        if provider:
+            user_id = session.get('user_id')
+            if not user_id:
+                return jsonify({"error": "Not logged in"}), 401
             
-        challenge = llm_service.generate_challenge(difficulty, additional_context, language, **model_params)
+            try:
+                # Convert provider to enum
+                provider_enum = LlmProvider[provider.upper()]
+                db = get_db_session()
+                api_key_entry = db.query(LlmApiKey).filter_by(user_id=user_id, llm_provider=provider_enum).first()
+                if api_key_entry:
+                    api_key = api_key_entry.api_key
+            except KeyError:
+                return jsonify({"error": f"Invalid provider: {provider}"}), 400
+        
+        # Initialize the LLM service with the selected provider, model, and API key
+        if provider and model and api_key:
+            llm_service.initialize_model(model_name=model, api_key=api_key)
+        
+        # Generate a new random challenge using LLM
+        challenge = llm_service.generate_challenge(difficulty, additional_context, language)
         
         if not challenge:
             return jsonify({"error": "Failed to generate challenge. Please check API key configuration."}), 500

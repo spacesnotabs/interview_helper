@@ -120,56 +120,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load a new coding challenge from the backend
     async function loadNewChallenge() {
         showLoading(challengeDescription);
-        
+
         try {
-            // Reset the hint index for the new challenge
             currentHintIndex = 0;
-            
-            // Get the selected difficulty and additional context
             const selectedDifficulty = difficultySelector.value;
             const additionalContext = contextInput.value.trim();
             const selectedLanguage = languageSelector.value;
-            
-            // Get the selected model
+
             let modelData = null;
             if (modelSelector.value) {
-                try {
-                    modelData = JSON.parse(modelSelector.value);
-                } catch (e) {
-                    console.error('Error parsing model data:', e);
-                }
+                modelData = JSON.parse(modelSelector.value);
             }
-            
-            // Build the API URL with parameters
-            let apiUrl = `${API_BASE_URL}/challenge`;
+
             const params = new URLSearchParams();
-            
-            if (selectedDifficulty) {
-                params.append('difficulty', selectedDifficulty);
-            }
-            
-            if (additionalContext) {
-                params.append('context', additionalContext);
-            }
-            
-            // Add the language parameter
+            if (selectedDifficulty) params.append('difficulty', selectedDifficulty);
+            if (additionalContext) params.append('context', additionalContext);
             params.append('language', selectedLanguage);
-            
-            // Add model parameters if selected
             if (modelData) {
                 params.append('provider', modelData.provider);
-                params.append('key_id', modelData.key_id);
+                params.append('model', modelData.model);
             }
-            
-            // Add parameters to URL if any exist
-            if (params.toString()) {
-                apiUrl += `?${params.toString()}`;
-            }
-            
-            // Call the backend API to get a challenge with the specified parameters
+
+            const apiUrl = `${API_BASE_URL}/challenge?${params.toString()}`;
             const response = await fetch(apiUrl);
             const data = await response.json();
-            
+
             if (response.ok) {
                 currentChallenge = data;
                 displayChallenge(data);
@@ -599,52 +574,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update model dropdown based on available API keys
     async function loadAvailableModels() {
         try {
-            // Only attempt to load models if user is logged in
             if (!currentUser) {
                 modelSelector.innerHTML = '<option value="">Login to use models</option>';
                 modelSelector.disabled = true;
                 return;
             }
-            
-            // Fetch available API keys for the user
+
             const response = await fetch(`${API_BASE_URL}/api-keys`);
-            
             if (response.ok) {
                 const data = await response.json();
-                availableModels = [];
-                
-                // Clear the current options
                 modelSelector.innerHTML = '<option value="">Choose a model</option>';
-                
-                // If there are no API keys, show a message
+
                 if (!data.apiKeys || data.apiKeys.length === 0) {
                     modelSelector.innerHTML = '<option value="">No API keys configured</option>';
                     modelSelector.disabled = true;
                     return;
                 }
-                
-                // For each API key, create a model option
-                data.apiKeys.forEach(key => {
-                    // Format provider name for display
-                    const providerName = key.llm_provider;
-                    
-                    // Add option for the provider
-                    const option = document.createElement('option');
-                    option.value = JSON.stringify({ provider: providerName, key_id: key.id });
-                    option.textContent = providerName + (key.model ? ` - ${key.model}` : '');
-                    modelSelector.appendChild(option);
-                    
-                    // Add to available models array
-                    availableModels.push({
-                        provider: providerName,
-                        key_id: key.id,
-                        model: key.model
-                    });
-                });
-                
+
+                for (const key of data.apiKeys) {
+                    const provider = key.llm_provider.toLowerCase();
+                    const modelsResponse = await fetch(`${API_BASE_URL}/llm-models/${provider}`);
+                    if (modelsResponse.ok) {
+                        const models = await modelsResponse.json();
+                        models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = JSON.stringify({ provider: key.llm_provider, model: model.value });
+                            option.textContent = `${key.llm_provider} - ${model.label}`;
+                            modelSelector.appendChild(option);
+                        });
+                    }
+                }
+
                 modelSelector.disabled = false;
             } else {
-                // Error fetching API keys
                 modelSelector.innerHTML = '<option value="">Error loading models</option>';
                 modelSelector.disabled = true;
             }
